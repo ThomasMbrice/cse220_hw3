@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <ctype.h> 
 
 #include "hw3.h" 
 
@@ -22,9 +23,7 @@ typedef struct ArrayofArrays {
 } ArrayofArrays;
 */
 
-// TODO CREATE A PREVOUS SAVE ARRAY FOR UNDO FUNCTION
-// will probobly have to redo entire thing with the fact that the prevois versions and 
-//int versions need to be stored in a data structure with each version in parrallel nned to delete versions if going back
+// TODO need to check if stack is 5 high if it is stop, also other cheks if it costs a condition
 
 GameState* initialize_game_state(const char *filename) { // done!
     FILE *file = fopen(filename, "r");
@@ -89,17 +88,10 @@ GameState* initialize_game_state(const char *filename) { // done!
     return state;
 }
 
-
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
-    int temprow = row, tempcol = col, word_exists_if_one = 0, index = 0;
+    int temprow = row, tempcol = col, index = 0, one_if_failure = 0;
     char *word;
-    char line[1024];
-    FILE *file = fopen("./tests/words.txt", "r");
-
-    if (file == NULL) {
-        perror("error");
-    }
 
     if((row < 0) | (col < 0))
         return game;
@@ -107,23 +99,34 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     if(direction == 'V'){ //use rows varrible
         game = gameextender(game);
             if(game->arr[game->currentindex].rowlen < (int)(row+strlen(tiles))){
-                printf("extension called \n");
             game = array_extender(game, 1, (int)(game->arr[(col+strlen(tiles))-game->currentindex].rowlen));
             }
         
         while(counter < strlen(tiles)){
-            if(tiles[counter] != ' '){
+            if(!(isspace(tiles[counter]))){
             game->arr[game->currentindex].array[row][col] = tiles[counter];
-            game->arr[game->currentindex].counterarray[row++][col]+= 1;
+            game->arr[game->currentindex].counterarray[row][col]+= 1;
+
+            if(game->arr[game->currentindex].counterarray[row][col] > 5){//checks for height greater than 5
+                one_if_failure = 1;
+                break;
+            }
+
             *num_tiles_placed+=1;
             }
             counter++;
+            row++;
         }
-        word = malloc(counter *sizeof(char));
-        
-        while((game->arr[game->currentindex].array[temprow][tempcol] != '.') && index < game->arr[game->currentindex].rows){
-            word[index++] = game->arr[game->currentindex].array[temprow++][tempcol];
-        }    
+
+        word = malloc(counter * sizeof(char));
+
+        while((game->arr[game->currentindex].array[temprow][tempcol] != '.') && temprow < game->arr[game->currentindex].rows){
+            word[index] = game->arr[game->currentindex].array[temprow][tempcol];
+            index++;
+            temprow++;
+            if((temprow == game->arr[game->currentindex].rows))
+            break;
+        }
     }
     else if(direction == 'H'){               //use rowlen
         game = gameextender(game);
@@ -133,42 +136,74 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
                 game = array_extender(game, 0, ((col+(int)strlen(tiles)) - game->arr[game->currentindex].rowlen));
             }
 
-         while(counter < strlen(tiles)){
-            if(tiles[counter] != ' '){
+         while(counter < strlen(tiles)){    
+            if(!isspace(tiles[counter])){
             game->arr[game->currentindex].array[row][col] = tiles[counter];
-            game->arr[game->currentindex].counterarray[row][col++] += 1;
+            game->arr[game->currentindex].counterarray[row][col] += 1;
+
+            if(game->arr[game->currentindex].counterarray[row][col] > 5){//checks for height greater than 5
+                one_if_failure = 1;
+                break;
+            }
+
             *num_tiles_placed+=1;
             }
             counter++;
+            col++;
         }         
-
 
         word = malloc(counter *sizeof(char));
         
-        while((game->arr[game->currentindex].array[temprow][tempcol] != '.') && index < game->arr[game->currentindex].rowlen){
-            word[index++] = game->arr[game->currentindex].array[temprow][tempcol++];
+        while((game->arr[game->currentindex].array[temprow][tempcol] != '.') && tempcol < game->arr[game->currentindex].rowlen){
+            word[index] = game->arr[game->currentindex].array[temprow][tempcol];
+            tempcol++;
+            index++;
+            if(tempcol == game->arr[game->currentindex].rowlen)
+                break;
         }   
-
     }
 
-    
-    while (fgets(line, sizeof(line), file)) {
-    line[strcspn(line, "\n")] = '\0';
-    if (strcasecmp(word, line) == 0) {      // thismight be wronge?
-        word_exists_if_one = 1;
-        break;
-    }
-}   
-    
-
-    if (word_exists_if_one != 1){
-        printf("no!");
+    if ((check_word(word) == 0) | (one_if_failure == 1)){ // if it is one it exists
+       printf("NOT A WORD: %s\n", word);
        game = undo_place_tiles(game);
     }
     
     free(word);
-    fclose(file);
     return game;
+}
+
+int check_word(char *word) {
+    FILE *file = fopen("./tests/words.txt", "r");
+    if (file == NULL) {
+        perror("Error: ");
+        return 0;   //not found
+    }
+    char line[1024];
+    char upperWord[1024]; 
+
+    for (int i = 0; word[i]; i++) {
+        upperWord[i] = toupper((unsigned char)word[i]);
+    }
+    upperWord[strlen(word)] = '\0';
+
+    rewind(file);
+
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = '\0';
+
+        char upperLine[1024];
+        for (int i = 0; line[i]; i++) {
+            upperLine[i] = toupper((unsigned char)line[i]);
+        }
+        upperLine[strlen(line)] = '\0';
+
+        if (strcmp(upperWord, upperLine) == 0) {
+            return 1; // found
+        }
+    }
+
+    return 0; // not found
+
 }
 
 GameState* gameextender(GameState *game){ // maybe fixed the bug
@@ -196,7 +231,6 @@ GameState* gameextender(GameState *game){ // maybe fixed the bug
 
     return game; 
 }
-
 
 GameState* undo_place_tiles(GameState *game) {
     if(game->currentindex > 0){
@@ -268,16 +302,16 @@ void save_game_state(GameState *game, const char *filename) { //done?
 
     for(int i = 0; i < game->arr[game->currentindex].rows;i++){         // actual characters
         for(int e= 0; e < game->arr[game->currentindex].rowlen; e++){
-            fprintf(file, "%c ", game->arr[game->currentindex].array[i][e]);
+            fprintf(file, "%c", game->arr[game->currentindex].array[i][e]);
         }
         fprintf(file, " \n");
     }
 
     for(int i = 0; i < game->arr[game->currentindex].rows;i++){        // counter under the characters
         for(int e= 0; e < game->arr[game->currentindex].rowlen; e++){
-            fprintf(file, "%d ", game->arr[game->currentindex].counterarray[i][e]);
+            fprintf(file, "%d", game->arr[game->currentindex].counterarray[i][e]);
         }
-        fprintf(file, "\n ");
+        fprintf(file, "\n");
     }
     fclose(file);
 }
