@@ -21,7 +21,8 @@ typedef struct GameState{
     int currentindex;
 } GameState;
 */
-
+typedef struct ArrayofArrays ArrayofArrays;
+typedef struct GameState GameState;
 
 GameState* initialize_game_state(const char *filename) { // done!
     FILE *file = fopen(filename, "r");

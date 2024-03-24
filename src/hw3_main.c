@@ -4,7 +4,7 @@
 #include "hw3.h"
 
 int main(void) {
-      
+      /*
   int num_tiles_placed = 0;
    	GameState *game = initialize_game_state("./tests/boards/board01.txt"); 
     game = place_tiles(game, 2, 3, 'V', "T PMAN", &num_tiles_placed);
@@ -29,6 +29,6 @@ int main(void) {
         printf("\n");
     }
     printf("\n num tiles placed %d \n", num_tiles_placed);
-  
+  */
   return 0;
 }
