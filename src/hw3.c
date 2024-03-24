@@ -9,21 +9,19 @@
 
 #define DEBUG(...) fprintf(stderr, "[          ] [ DEBUG ] "); fprintf(stderr, __VA_ARGS__); fprintf(stderr, " -- %s()\n", __func__)
 /*
-typedef struct GameState {
-    ArrayofArrays *arr;
-    int currentindex;
-} GameState;
-*/
-/*
 typedef struct ArrayofArrays {
     char **array;
     int **counterarray;
     int rows;
     int rowlen;
 } ArrayofArrays;
+
+typedef struct GameState{
+    ArrayofArrays *arr;
+    int currentindex;
+} GameState;
 */
 
-// TODO need to check if stack is 5 high if it is stop, also other cheks if it costs a condition
 
 GameState* initialize_game_state(const char *filename) { // done!
     FILE *file = fopen(filename, "r");
@@ -304,7 +302,6 @@ void free_game_state(GameState *game) {//?
     //free(game->arr);
     */
     free(game);
-
 }
 
 void save_game_state(GameState *game, const char *filename) { //done?
