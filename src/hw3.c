@@ -90,7 +90,7 @@ GameState* initialize_game_state(const char *filename) { // done!
 
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
-    int temprow = row, tempcol = col, index = 0, one_if_failure = 0;
+    int temprow = row, tempcol = col, index = 0, one_if_failure = 0, num_tiles_placedcopy = *num_tiles_placed;
     char *word;
 
     if((row < 0) | (col < 0))
@@ -119,6 +119,10 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         }
 
         word = malloc(counter * sizeof(char));
+
+        while (temprow-1 > 0 && game->arr[game->currentindex].array[temprow-1][tempcol] != '.'){   //go back
+            temprow--;
+        }
 
         while((game->arr[game->currentindex].array[temprow][tempcol] != '.') && temprow < game->arr[game->currentindex].rows){
             word[index] = game->arr[game->currentindex].array[temprow][tempcol];
@@ -154,6 +158,10 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
         word = malloc(counter *sizeof(char));
         
+        while (tempcol-1 > 0 && game->arr[game->currentindex].array[temprow][tempcol-1] != '.'){   //go back
+            tempcol--;
+        }
+
         while((game->arr[game->currentindex].array[temprow][tempcol] != '.') && tempcol < game->arr[game->currentindex].rowlen){
             word[index] = game->arr[game->currentindex].array[temprow][tempcol];
             tempcol++;
@@ -165,6 +173,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
     if ((check_word(word) == 0) | (one_if_failure == 1)){ // if it is one it exists
        printf("NOT A WORD: %s\n", word);
+       *num_tiles_placed = num_tiles_placedcopy;
        game = undo_place_tiles(game);
     }
     
@@ -281,18 +290,19 @@ return game;
 }
 
 void free_game_state(GameState *game) {//?
-    
+    /*
     if (game == NULL)
         return;
     if (game->arr->array != NULL) {
-        //for (int i = 0; i < game->rows; i++){
-            //free(game->arr[game->currentindex].array[i]);
-            //free(game->arr[game->currentindex].counterarray[i]);
-        //}
-        //free(game->arr->array);
-        //free(game->arr->counterarray);
+        for (int i = 0; i < game->arr[game->currentindex].rows; i++){
+            free(game->arr[game->currentindex].array[i]);
+            free(game->arr[game->currentindex].counterarray[i]);
+        }
+        free(game->arr->array);
+        free(game->arr->counterarray);
     }
     //free(game->arr);
+    */
     free(game);
 
 }
@@ -304,7 +314,7 @@ void save_game_state(GameState *game, const char *filename) { //done?
         for(int e= 0; e < game->arr[game->currentindex].rowlen; e++){
             fprintf(file, "%c", game->arr[game->currentindex].array[i][e]);
         }
-        fprintf(file, " \n");
+        fprintf(file, "\n");
     }
 
     for(int i = 0; i < game->arr[game->currentindex].rows;i++){        // counter under the characters
