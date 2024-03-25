@@ -1,15 +1,11 @@
 #include <stdlib.h>
 
-typedef struct ArrayofArrays {
+typedef struct GameState{
     char **array;
     int **counterarray;
     int rows;
     int rowlen;
-} ArrayofArrays;
-
-typedef struct GameState{
-    ArrayofArrays *arr;
-    int currentindex;
+    struct GameState *pastpointer;
 } GameState;
 
 int check_word(char *word);
