@@ -21,8 +21,6 @@ typedef struct GameState{
     int currentindex;
 } GameState;
 */
-typedef struct ArrayofArrays ArrayofArrays;
-typedef struct GameState GameState;
 
 GameState* initialize_game_state(const char *filename) { // done!
     FILE *file = fopen(filename, "r");
@@ -97,11 +95,13 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
     if(direction == 'V'){ //use rows varrible
         game = gameextender(game);
-            if(game->arr[game->currentindex].rowlen < (int)(row+strlen(tiles))){
-            game = array_extender(game, 1, (int)(game->arr[(col+strlen(tiles))-game->currentindex].rowlen));
+
+            if(game->arr[game->currentindex].rows < (int)(row+strlen(tiles))){ 
+                game = array_extender(game, 1, ((row+(int)strlen(tiles)) - game->arr[game->currentindex].rows));
             }
-        
-        while(counter < strlen(tiles)){
+
+
+        while(counter < strlen(tiles)){// this causes seg fault
             if(!(isspace(tiles[counter]))){
             game->arr[game->currentindex].array[row][col] = tiles[counter];
             game->arr[game->currentindex].counterarray[row][col]+= 1;
@@ -116,7 +116,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             counter++;
             row++;
         }
-
+    
         word = malloc(counter * sizeof(char));
 
         while (temprow-1 > 0 && game->arr[game->currentindex].array[temprow-1][tempcol] != '.'){   //go back
@@ -135,7 +135,6 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         game = gameextender(game);
   
             if(game->arr[game->currentindex].rowlen < (int)(col+strlen(tiles))){
-                //printf("extension called %d \n", ((col+(int)strlen(tiles)) - game->arr[game->currentindex].rowlen));
                 game = array_extender(game, 0, ((col+(int)strlen(tiles)) - game->arr[game->currentindex].rowlen));
             }
 
@@ -244,7 +243,7 @@ GameState* undo_place_tiles(GameState *game) {
     if(game->currentindex > 0){
     free(game->arr[game->currentindex].counterarray);
     free(game->arr[game->currentindex].array);
-    game->currentindex--;
+    game->currentindex-=1;
     return game;
     }
     else{
@@ -258,6 +257,12 @@ game->arr[game->currentindex].rows = game->arr[game->currentindex].rows+inc_inde
 game->arr[game->currentindex].array = realloc(game->arr[game->currentindex].array, game->arr[game->currentindex].rows* sizeof(char *));
 game->arr[game->currentindex].counterarray = realloc(game->arr[game->currentindex].counterarray, game->arr[game->currentindex].rows* sizeof(int *));
 
+for(int i = game->arr[game->currentindex].rows - inc_index; i < game->arr[game->currentindex].rows; i++){                            
+    game->arr[game->currentindex].array[i] = realloc(game->arr[game->currentindex].array[i], game->arr[game->currentindex].rowlen * sizeof(char)); // reallloc data
+    game->arr[game->currentindex].counterarray[i] = realloc(game->arr[game->currentindex].counterarray[i], game->arr[game->currentindex].rowlen * sizeof(int)); // reallloc data
+
+}
+
 for(int i = game->arr[game->currentindex].rows-inc_index; i < game->arr[game->currentindex].rows; i++){     //put values into new array slots
     for(int e = 0; e < game->arr[game->currentindex].rowlen; e++){
         game->arr[game->currentindex].array[i][e] = '.'; 
@@ -269,7 +274,7 @@ for(int i = game->arr[game->currentindex].rows-inc_index; i < game->arr[game->cu
 else{                   // extend the length of 'rowlength'
 game->arr[game->currentindex].rowlen = game->arr[game->currentindex].rowlen+inc_index;  // increment value
 
-for(int i = 0; i < game->arr[game->currentindex].rows; i++){                            
+for(int i = 0; i < game->arr[game->currentindex].rows; i++){   //                         
     game->arr[game->currentindex].array[i] = realloc(game->arr[game->currentindex].array[i], game->arr[game->currentindex].rowlen * sizeof(char)); // reallloc data
     game->arr[game->currentindex].counterarray[i] = realloc(game->arr[game->currentindex].counterarray[i], game->arr[game->currentindex].rowlen * sizeof(int)); // reallloc data
 
@@ -288,25 +293,39 @@ for(int i = 0; i < game->arr[game->currentindex].rows; i++){     //put values in
 return game;
 }
 
-void free_game_state(GameState *game) {//?
-    /*
+void free_game_state(GameState *game) {
     if (game == NULL)
         return;
-    if (game->arr->array != NULL) {
-        for (int i = 0; i < game->arr[game->currentindex].rows; i++){
-            free(game->arr[game->currentindex].array[i]);
-            free(game->arr[game->currentindex].counterarray[i]);
+
+    if (game->arr != NULL) {
+        /*
+        for (int i = 0; i < game->arr->rows; i++) {
+            if (game->arr->array != NULL && game->arr->array[i] != NULL) {
+                free(game->arr->array[i]);
+            }
+            if (game->arr->counterarray != NULL && game->arr->counterarray[i] != NULL) {
+                free(game->arr->counterarray[i]);
+            }
         }
-        free(game->arr->array);
-        free(game->arr->counterarray);
+        if (game->arr->array != NULL) {
+            free(game->arr->array);
+        }
+        if (game->arr->counterarray != NULL) {
+            free(game->arr->counterarray);
+        }
+        */
+        free(game->arr);
     }
-    //free(game->arr);
-    */
     free(game);
 }
 
+
 void save_game_state(GameState *game, const char *filename) { //done?
     FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+    printf("Error opening file\n");
+    return; 
+    }
 
     for(int i = 0; i < game->arr[game->currentindex].rows;i++){         // actual characters
         for(int e= 0; e < game->arr[game->currentindex].rowlen; e++){
