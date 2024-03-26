@@ -187,7 +187,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
        game = undo_place_tiles(game);
     }
     
-    /*
+    
     for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -195,8 +195,8 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
             printf("\n");
-    */
-   
+    
+
     free(word);
     return game;
 }
@@ -297,18 +297,16 @@ game->array = realloc(game->array, game->rows * sizeof(char *));
     }
 }
 else{                   // extend the length of 'rowlength'
-game->rowlen = game->rowlen+inc_index;  // increment value
+game->rowlen = game->rowlen + inc_index;  // increment value
 
-for(int i = 0; i < game->rows; i++){   //                         
-    game->array[i] = realloc(game->array[i], game->rowlen * sizeof(char)); // reallloc data
-    game->counterarray[i] = realloc(game->counterarray[i], game->rowlen * sizeof(int)); // reallloc data
-
+for (int i = 0; i < game->rows; i++) {                             
+    game->array[i] = realloc(game->array[i], game->rowlen * sizeof(char));
+    game->counterarray[i] = realloc(game->counterarray[i], game->rowlen * sizeof(int));
 }
 
-
-for(int i = 0; i < game->rows; i++){     //put values into new array slots
-    for(int e = game->rowlen - inc_index; e < game->rowlen; e++){
-        game->array[i][e] = '.'; 
+for (int i = 0; i < game->rows; i++) {
+    for (int e = game->rowlen - inc_index; e < game->rowlen; e++) {
+        game->array[i][e] = '.';
         game->counterarray[i][e] = 0;
     }
 }
