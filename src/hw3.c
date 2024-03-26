@@ -22,8 +22,6 @@ GameState* initialize_game_state(const char *filename) { // done!
     FILE *file = fopen(filename, "r");
     GameState *state = malloc(sizeof(GameState));
 
-    state = malloc(sizeof(GameState));  //?
-
     state->pastpointer = NULL;
 
     if (file == NULL) {
@@ -38,6 +36,7 @@ GameState* initialize_game_state(const char *filename) { // done!
     while (c != EOF) {
         if(c == '\n' && rowlen == 0)
             rowlen = index;
+        if(c != '\n')
         index++;
         c = fgetc(file);
     }
@@ -48,17 +47,17 @@ GameState* initialize_game_state(const char *filename) { // done!
         perror("critical failure");
         exit(EXIT_FAILURE);
     }
-    
+
     rewind(file);                       //rewind time
 
     state->rows = numofrows;
     state->rowlen = rowlen;
 
     state->array = malloc(numofrows * sizeof(char *));
-    state->counterarray = calloc(numofrows, sizeof(int *));
+    state->counterarray = malloc(numofrows * sizeof(int *));
     for (int i = 0; i < rowlen; i++) {                                      // malloc init for arrays
         state->array[i] = malloc(rowlen * sizeof(char));
-        state->counterarray[i] = calloc(rowlen, sizeof(int));
+        state->counterarray[i] = malloc(rowlen* sizeof(int));
     }
 
     int x = 0, y = 0;                                                       // add values to arrays
@@ -74,21 +73,30 @@ GameState* initialize_game_state(const char *filename) { // done!
     for(int i = 0; i < state->rows; i++){
         for(int e = 0; e < state->rowlen; e++){
             if(state->array[i][e] != '.')
-                state->counterarray[i][e]++;
+                state->counterarray[i][e] = 1;
+            else
+                state->counterarray[i][e] = 0;
+
         }
     }
-
     return state;
 }
 
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
-    int temprow = row, tempcol = col, index = 0, one_if_failure = 0;
+    int temprow = row, tempcol = col, index = 0;
     *num_tiles_placed = 0;
     char *word;
 
-    if((row < 0) | (col < 0))
+    if(check_for_2_letter(game) == 3 && strlen(tiles) < 2){ // BOARD IS EMPTEY
+    printf("\nWORD TOO SMALL FOR FIRST ROT: \n");
+    return game; // FIRST WORD IS TOO SMALL
+    }
+
+    if((row < 0) | (col < 0) | (tiles == NULL) | (game->rowlen < col) | (game->rows < row)){
+        printf("invalid init condtion");
         return game;
+    }
 
     if(direction == 'V'){ //use rows varrible
         game = gameextender(game);
@@ -103,8 +111,9 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             game->counterarray[row][col]+= 1;
 
             if(game->counterarray[row][col] > 5){//checks for height greater than 5
-                one_if_failure = 1;
-                break;
+                    *num_tiles_placed = 0;
+                    game = undo_place_tiles(game);
+                    return game;
             }
 
             *num_tiles_placed+=1;
@@ -112,12 +121,13 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             counter++;
             row++;
         }
-    
-        word = malloc(counter * sizeof(char));
-
-        while (temprow-1 > 0 && game->array[temprow-1][tempcol] != '.'){   //go back
+        
+        while (temprow-1 >= 0 && game->counterarray[temprow-1][tempcol] != 0){   //go back
             temprow--;
+            counter++;
         }
+
+        word = malloc(counter * sizeof(char)+1);
 
         while((game->array[temprow][tempcol] != '.') && temprow < game->rows){
             word[index] = game->array[temprow][tempcol];
@@ -126,6 +136,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             if(temprow == game->rows)
             break;
         }
+        word[index] = '\0';
 
     }
     else if(direction == 'H'){               //use rowlen
@@ -141,37 +152,42 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             game->counterarray[row][col] += 1;
 
             if(game->counterarray[row][col] > 5){//checks for height greater than 5
-                one_if_failure = 1;
-                break;
+                    *num_tiles_placed = 0;
+                    game = undo_place_tiles(game);
+                    return game;
             }
 
             *num_tiles_placed+=1;
             }
             counter++;
             col++;
-        }         
+        }         //end word in null terminator
 
-        word = malloc(counter *sizeof(char));
-        
-        while (tempcol-1 > 0 && game->array[temprow][tempcol-1] != '.'){   //go back
+        while (tempcol-1 >= 0 && game->counterarray[temprow][tempcol-1] != 0){   //go back
             tempcol--;
+            counter++;
         }
 
+        word = malloc(counter *sizeof(char)+1);
+        
         while((game->array[temprow][tempcol] != '.') && tempcol < game->rowlen){
             word[index] = game->array[temprow][tempcol];
             tempcol++;
             index++;
             if(tempcol == game->rowlen)
                 break;
-        }   
+        } 
+    word[index] = '\0';
+          
     }
 
-    if ((check_word(word) == 0) | (one_if_failure == 1)){ // if it is one it exists
-       printf("\nNOT A WORD: %s, oneiffailure: %d\n", word, one_if_failure);
+    if (check_word(word) == 0){ // if it is one it exists
+       printf("\nNOT A WORD: %s \n", word);
        *num_tiles_placed = 0;
        game = undo_place_tiles(game);
     }
-
+    
+    /*
     for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -179,10 +195,26 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
             printf("\n");
-
-    
+    */
+   
     free(word);
     return game;
+}
+
+int check_for_2_letter(GameState *game){
+    int counter = 0;
+    for(int i = 0; i < game->rows;i++){
+        for(int e = 0; e<game->rowlen;e++){
+            if(game->counterarray[i][e] != 0)
+            counter++;
+        }
+    }
+    if((counter == 1) | (counter == 2))
+    return 1;   //first word needs to be greater than 2
+    if(counter == 0)
+    return 3;   // board is emptey
+
+    return 0;   //board is correct
 }
 
 int check_word(char *word) {
@@ -215,17 +247,17 @@ int check_word(char *word) {
 
 GameState* gameextender(GameState *game){ // maybe fixed the bug
     GameState *newgame = malloc(sizeof(GameState));
-    newgame->pastpointer = malloc(sizeof(*game));
+
     newgame->pastpointer = game;
 
-    newgame->rows = newgame->pastpointer->rows;
-    newgame->rowlen = newgame->pastpointer->rowlen;
+    newgame->rows = game->rows;
+    newgame->rowlen = game->rowlen;
 
     newgame->array = malloc(newgame->rows * sizeof(char *));
-    newgame->counterarray = calloc(newgame->rows, sizeof(int *));
+    newgame->counterarray = malloc(newgame->rows * sizeof(int *));
     for (int i = 0; i < newgame->rows; i++) {                                      // malloc init for arrays
         newgame->array[i] = malloc(newgame->rowlen * sizeof(char));
-        newgame->counterarray[i] = calloc(newgame->rowlen, sizeof(int));
+        newgame->counterarray[i] = malloc(newgame->rowlen * sizeof(int));
     }
 
     for(int i = 0;i < newgame->rows; i++){
@@ -252,22 +284,17 @@ GameState* undo_place_tiles(GameState *game) {
 GameState* array_extender(GameState *game, int extend_num_of_rows_if_one, int inc_index){ //resizes and puts in peroids this needs work (need to add in num array feture)
 if(extend_num_of_rows_if_one == 1){    // extend the number of 'rows'
 game->rows = game->rows+inc_index;  // increment value
-game->array = realloc(game->array, game->rows* sizeof(char *));
-game->counterarray = realloc(game->counterarray, game->rows* sizeof(int *));
-
-for(int i = game->rows - inc_index; i < game->rows; i++){                            
-    game->array[i] = realloc(game->array[i], game->rowlen * sizeof(char)); // reallloc data
-    game->counterarray[i] = realloc(game->counterarray[i], game->rowlen * sizeof(int)); // reallloc data
-
-}
-
-for(int i = game->rows-inc_index; i < game->rows; i++){     //put values into new array slots
-    for(int e = 0; e < game->rowlen; e++){
-        game->array[i][e] = '.'; 
-        game->counterarray[i][e] = 0; 
+game->array = realloc(game->array, game->rows * sizeof(char *));
+    game->counterarray = realloc(game->counterarray, game->rows * sizeof(int *));
+    // Initialize the newly allocated rows
+    for (int i = game->rows - inc_index; i < game->rows; i++) {
+        game->array[i] = malloc(game->rowlen * sizeof(char));
+        game->counterarray[i] = malloc(game->rowlen * sizeof(int));
+        for (int j = 0; j < game->rowlen; j++) {
+            game->array[i][j] = '.';
+            game->counterarray[i][j] = 0;
+        }
     }
-}
-
 }
 else{                   // extend the length of 'rowlength'
 game->rowlen = game->rowlen+inc_index;  // increment value
@@ -296,7 +323,6 @@ void free_game_state(GameState *game) {
         return;
     GameState *gamer = game;
     while(gamer->pastpointer != NULL) {
-
         gamer = gamer->pastpointer;
         free(gamer); 
     }
