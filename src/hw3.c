@@ -84,17 +84,20 @@ GameState* initialize_game_state(const char *filename) { // done!
 
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
-    int temprow = row, tempcol = col, index = 0;
+    int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0;
     *num_tiles_placed = 0;
-    char *word;
+    char *word, *overwriteword;
+
 
     if(check_for_2_letter(game) == 3 && strlen(tiles) < 2){ // BOARD IS EMPTEY
     printf("\nWORD TOO SMALL FOR FIRST ROT: \n");
+    *num_tiles_placed = 0;
     return game; // FIRST WORD IS TOO SMALL
     }
 
     if((row < 0) | (col < 0) | (tiles == NULL) | (game->rowlen < col) | (game->rows < row)){
-        printf("invalid init condtion");
+        printf("invalid init condtion\n");
+        *num_tiles_placed = 0;
         return game;
     }
 
@@ -108,6 +111,8 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         while(counter < strlen(tiles)){// this causes seg fault
             if(!(isspace(tiles[counter]))){
             game->array[row][col] = tiles[counter];
+            if(game->counterarray[row][col] != 0) // checks for overrunning 
+            ifnotzerotrue++;
             game->counterarray[row][col]+= 1;
 
             if(game->counterarray[row][col] > 5){//checks for height greater than 5
@@ -121,10 +126,23 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             counter++;
             row++;
         }
-        
+
         while (temprow-1 >= 0 && game->counterarray[temprow-1][tempcol] != 0){   //go back
             temprow--;
             counter++;
+        }
+
+        overwriteword = malloc(counter *sizeof(char)+1);
+        
+        if(game->pastpointer != NULL){
+            int index2 = 0, temprow2 = temprow;
+            while((game->pastpointer->array[temprow2][tempcol] != '.') && temprow2 < game->pastpointer->rows){
+                overwriteword[index2] = game->pastpointer->array[temprow2][tempcol];
+                index2++;
+                temprow2++;
+                if(temprow == game->pastpointer->rows)
+                break;
+            }
         }
 
         word = malloc(counter * sizeof(char)+1);
@@ -137,6 +155,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             break;
         }
         word[index] = '\0';
+        overwriteword[index] = '\0';
 
     }
     else if(direction == 'H'){               //use rowlen
@@ -149,9 +168,12 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
          while(counter < strlen(tiles)){    
             if(!isspace(tiles[counter])){
             game->array[row][col] = tiles[counter];
+            if(game->counterarray[row][col] == 0) // checks for overrunning 
+            ifnotzerotrue++;
             game->counterarray[row][col] += 1;
 
             if(game->counterarray[row][col] > 5){//checks for height greater than 5
+                    printf("GREATER THAN 5 \n");
                     *num_tiles_placed = 0;
                     game = undo_place_tiles(game);
                     return game;
@@ -168,8 +190,21 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             counter++;
         }
 
-        word = malloc(counter *sizeof(char)+1);
-        
+        overwriteword = malloc(counter *sizeof(char)+1);
+
+        if(game->pastpointer != NULL){
+            int index2 = 0, tempcol2 = tempcol;
+            while((game->pastpointer->array[temprow][tempcol2] != '.') && tempcol2 < game->pastpointer->rowlen){
+                overwriteword[index2] = game->pastpointer->array[temprow][tempcol2];
+                index2++;
+                tempcol2++;
+                if(tempcol2 == game->pastpointer->rowlen)
+                break;
+            }
+        }
+
+        word = malloc(counter *sizeof(char)+1);                
+
         while((game->array[temprow][tempcol] != '.') && tempcol < game->rowlen){
             word[index] = game->array[temprow][tempcol];
             tempcol++;
@@ -177,17 +212,22 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             if(tempcol == game->rowlen)
                 break;
         } 
-    word[index] = '\0';
-          
+    word[index] = '\0';  
+    overwriteword[index] = '\0';    
     }
 
+
     if (check_word(word) == 0){ // if it is one it exists
-       printf("\nNOT A WORD: %s \n", word);
+        printf("\nNOT A WORD: %s \n", word);
        *num_tiles_placed = 0;
        game = undo_place_tiles(game);
     }
-    
-    
+    else if(check_word(overwriteword) == 1 && strcmp(word,overwriteword) ==0 ){
+            printf("OVERWRITE: %s word %s\n", overwriteword, word);
+            *num_tiles_placed = 0;
+            game = undo_place_tiles(game);
+    }
+    /*
     for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -195,11 +235,12 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
             printf("\n");
-    
-
+    */
     free(word);
+    free(overwriteword);
     return game;
 }
+
 
 int check_for_2_letter(GameState *game){
     int counter = 0;
@@ -271,13 +312,12 @@ GameState* gameextender(GameState *game){ // maybe fixed the bug
 }
 
 GameState* undo_place_tiles(GameState *game) {
-    if(game->pastpointer != NULL){
-    GameState *pointer = game->pastpointer;
-    free(game);
-    return pointer;
-    }
-    else{
-        return game;
+    if (game->pastpointer != NULL) {
+        GameState *pointer = game->pastpointer;
+        free(game); 
+        return pointer; 
+    } else {
+        return game; 
     }
 }
 
