@@ -118,7 +118,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
             if(game->counterarray[row][col] > 5){//checks for height greater than 5
                     *num_tiles_placed = 0;
-                    game = undo_place_tiles(game);
+                    game = game->pastpointer;
                     return game;
             }
 
@@ -176,7 +176,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             if(game->counterarray[row][col] > 5){//checks for height greater than 5
                     printf("GREATER THAN 5 \n");
                     *num_tiles_placed = 0;
-                    game = undo_place_tiles(game);
+                    game = game->pastpointer;
                     return game;
             }
 
@@ -221,12 +221,12 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     if (check_word(word) == 0){ // if it is one it exists
         printf("\nNOT A WORD: %s \n", word);
        *num_tiles_placed = 0;
-       game = undo_place_tiles(game);
+       game = game->pastpointer;
     }
     else if(check_word(overwriteword) == 1 && strcmp(word,overwriteword) ==0 ){
             printf("OVERWRITE: %s word %s\n", overwriteword, word);
             *num_tiles_placed = 0;
-            game = undo_place_tiles(game);
+            game = game->pastpointer;
     }
     
     for (int i = 0; i < game->rows; i++) {
@@ -340,11 +340,9 @@ for (int i = 0; i < newgame->rows; i++) {
 return newgame;
 }
 
-GameState* undo_place_tiles(GameState *game) {
+GameState* undo_place_tiles(GameState *game) {//god help me
     if (game->pastpointer != NULL) {
-        GameState *pointer = game->pastpointer;
-        free(game); 
-        return pointer; 
+        return game->pastpointer; 
     } else {
         return game; 
     }
