@@ -410,7 +410,7 @@ void save_game_state(GameState *game, const char *filename) { //done?
         }
         fprintf(file, "\n");
     }
-
+    
     for(int i = 0; i < game->rows;i++){        // counter under the characters
         for(int e= 0; e < game->rowlen; e++){
             fprintf(file, "%d", game->counterarray[i][e]);
