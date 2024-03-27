@@ -237,8 +237,8 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     }
             printf("\n");
     
-    free(word);
-    free(overwriteword);
+    //free(word);
+    //free(overwriteword);
     return game;
 }
 
@@ -302,11 +302,13 @@ newgame->array = malloc(newgame->rows * sizeof(char *));
 newgame->counterarray = malloc(newgame->rows * sizeof(int *));
 if (newgame->array == NULL || newgame->counterarray == NULL) {
     perror("Memory allocation failed");
+    /*
     // Free allocated memory before returning NULL
     free(newgame->array);
     free(newgame->counterarray);
     free(newgame);
     return NULL;
+    */
 }
 
 // Allocate memory for each row in array and counterarray
@@ -316,6 +318,7 @@ for (int i = 0; i < newgame->rows; i++) {
     if (newgame->array[i] == NULL || newgame->counterarray[i] == NULL) {
         perror("Memory allocation failed");
         // Free allocated memory before returning NULL
+        /*
         for (int j = 0; j < i; j++) {
             free(newgame->array[j]);
             free(newgame->counterarray[j]);
@@ -323,6 +326,7 @@ for (int i = 0; i < newgame->rows; i++) {
         free(newgame->array);
         free(newgame->counterarray);
         free(newgame);
+        */
         return NULL;
     }
 
@@ -384,6 +388,7 @@ return game;
 }
 
 void free_game_state(GameState *game) {
+    /*
     if (game == NULL)
         return;
     GameState *gamer = game;
@@ -392,6 +397,7 @@ void free_game_state(GameState *game) {
         free(gamer); 
     }
     free(game);
+    */
 }
 
 void save_game_state(GameState *game, const char *filename) { //done?
@@ -400,7 +406,6 @@ void save_game_state(GameState *game, const char *filename) { //done?
         perror("Error opening file");
         return;
     }
-
 
     for(int i = 0; i < game->rows;i++){         // actual characters
         for(int e= 0; e < game->rowlen; e++){
