@@ -24,7 +24,7 @@ GameState* initialize_game_state(const char *filename) { // done!
 
     state->pastpointer = NULL;
 
-    if (file == NULL) {
+    if(file == NULL) {
         perror("failed to  open fiile");
         exit(EXIT_FAILURE);
     }
@@ -84,7 +84,7 @@ GameState* initialize_game_state(const char *filename) { // done!
 
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
-    int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0;
+    int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0, temprowforoverwrite = row, tempcolforoverwrite = col;
     *num_tiles_placed = 0;
     char *word, *overwriteword;
 
@@ -95,12 +95,13 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     return game; // FIRST WORD IS TOO SMALL
     }
 
-    if((row < 0) | (col < 0) | (tiles == NULL) | (game->rowlen < col) | (game->rows < row)){
+    if((row < 0) | (col < 0) | (tiles == NULL) | (game->rowlen <= col) | (game->rows <= row)){
         printf("invalid init condtion\n");
         *num_tiles_placed = 0;
         return game;
     }
 
+    
     if(direction == 'V'){ //use rows varrible
         game = gameextender(game);
 
@@ -135,7 +136,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         overwriteword = malloc(counter *sizeof(char)+1);
         
         if(game->pastpointer != NULL){
-            int index2 = 0, temprow2 = temprow;
+            int index2 = 0, temprow2 = temprowforoverwrite;
             while((game->pastpointer->array[temprow2][tempcol] != '.') && temprow2 < game->pastpointer->rows){
                 overwriteword[index2] = game->pastpointer->array[temprow2][tempcol];
                 index2++;
@@ -193,7 +194,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         overwriteword = malloc(counter *sizeof(char)+1);
 
         if(game->pastpointer != NULL){
-            int index2 = 0, tempcol2 = tempcol;
+            int index2 = 0, tempcol2 = tempcolforoverwrite;
             while((game->pastpointer->array[temprow][tempcol2] != '.') && tempcol2 < game->pastpointer->rowlen){
                 overwriteword[index2] = game->pastpointer->array[temprow][tempcol2];
                 index2++;
@@ -227,7 +228,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             *num_tiles_placed = 0;
             game = undo_place_tiles(game);
     }
-    /*
+    
     for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -235,12 +236,11 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
             printf("\n");
-    */
+    
     free(word);
     free(overwriteword);
     return game;
 }
-
 
 int check_for_2_letter(GameState *game){
     int counter = 0;
@@ -288,27 +288,56 @@ int check_word(char *word) {
 
 GameState* gameextender(GameState *game){ // maybe fixed the bug
     GameState *newgame = malloc(sizeof(GameState));
+if (newgame == NULL) {
+    perror("Memory allocation failed");
+    return NULL;
+}
 
-    newgame->pastpointer = game;
+newgame->pastpointer = game;
+newgame->rows = game->rows;
+newgame->rowlen = game->rowlen;
 
-    newgame->rows = game->rows;
-    newgame->rowlen = game->rowlen;
+// Allocate memory for array and counterarray pointers
+newgame->array = malloc(newgame->rows * sizeof(char *));
+newgame->counterarray = malloc(newgame->rows * sizeof(int *));
+if (newgame->array == NULL || newgame->counterarray == NULL) {
+    perror("Memory allocation failed");
+    // Free allocated memory before returning NULL
+    free(newgame->array);
+    free(newgame->counterarray);
+    free(newgame);
+    return NULL;
+}
 
-    newgame->array = malloc(newgame->rows * sizeof(char *));
-    newgame->counterarray = malloc(newgame->rows * sizeof(int *));
-    for (int i = 0; i < newgame->rows; i++) {                                      // malloc init for arrays
-        newgame->array[i] = malloc(newgame->rowlen * sizeof(char));
-        newgame->counterarray[i] = malloc(newgame->rowlen * sizeof(int));
-    }
-
-    for(int i = 0;i < newgame->rows; i++){
-        for(int e= 0; e < newgame->rowlen; e++){
-            newgame->counterarray[i][e] = game->counterarray[i][e]; //copies couter
-            newgame->array[i][e] = game->array[i][e]; // copies arr
+// Allocate memory for each row in array and counterarray
+for (int i = 0; i < newgame->rows; i++) {
+    newgame->array[i] = malloc(newgame->rowlen * sizeof(char));
+    newgame->counterarray[i] = malloc(newgame->rowlen * sizeof(int));
+    if (newgame->array[i] == NULL || newgame->counterarray[i] == NULL) {
+        perror("Memory allocation failed");
+        // Free allocated memory before returning NULL
+        for (int j = 0; j < i; j++) {
+            free(newgame->array[j]);
+            free(newgame->counterarray[j]);
         }
+        free(newgame->array);
+        free(newgame->counterarray);
+        free(newgame);
+        return NULL;
     }
 
-    return newgame; 
+    // Initialize the memory with zeros
+    memset(newgame->array[i], 0, newgame->rowlen * sizeof(char));
+    memset(newgame->counterarray[i], 0, newgame->rowlen * sizeof(int));
+}
+
+// Copy data from the existing game state to the new game state
+for (int i = 0; i < newgame->rows; i++) {
+    memcpy(newgame->array[i], game->array[i], newgame->rowlen * sizeof(char));
+    memcpy(newgame->counterarray[i], game->counterarray[i], newgame->rowlen * sizeof(int));
+}
+
+return newgame;
 }
 
 GameState* undo_place_tiles(GameState *game) {
