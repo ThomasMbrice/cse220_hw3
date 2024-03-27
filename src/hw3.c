@@ -388,16 +388,9 @@ return game;
 }
 
 void free_game_state(GameState *game) {
-    /*
-    if (game == NULL)
-        return;
-    GameState *gamer = game;
-    while(gamer->pastpointer != NULL) {
-        gamer = gamer->pastpointer;
-        free(gamer); 
-    }
+    
+    if (game != NULL)
     free(game);
-    */
 }
 
 void save_game_state(GameState *game, const char *filename) { //done?
