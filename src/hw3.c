@@ -242,7 +242,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\nNOT A WORD: %s \n", word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
-    } else if (check_word(overwriteword) == 1 && strlen(overwriteword) > 2 && strlen(word) == strlen(overwriteword)){ //&& strcmp(word, overwriteword) == 0) { // word overwritten!!
+    } else if (check_word(overwriteword) == 1 && strcmp(word, overwriteword) == 0){ //&& strcmp(word, overwriteword) == 0) { // word overwritten!!
         printf("OVERWRITE: %s word %s\n", overwriteword, word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
