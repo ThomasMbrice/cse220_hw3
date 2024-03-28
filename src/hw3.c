@@ -269,7 +269,22 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 }
 /*
 int oppo_check(int row, int col, int size, GameState *game, char direction){
+    int adjcount = 0, index = 0;
+    if(direction == 'H'){ // return 1 for failed wordcheck and 3 for non adjecncy
+        index = col;
+        while(index < col+size){
 
+        }
+    }   
+    if(direction == 'V'){
+        index = row;
+        while(index < row+size){
+
+        }
+    }
+    
+    if(adjcount == 0)
+    return 3;           //non adjecent
 
 return 0; //NO ERROR 
 }
@@ -433,7 +448,6 @@ void free_game_state(GameState *game) {
         free(game);
     }
 }
-
 
 void save_game_state(GameState *game, const char *filename) { //done?
     FILE *file = fopen(filename, "w");
