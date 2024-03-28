@@ -242,6 +242,10 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     return game;
 }
 
+int check_vert(GameState *game, char* word, int begin, int end){
+
+}
+
 int check_for_2_letter(GameState *game){
     int counter = 0;
     for(int i = 0; i < game->rows;i++){
@@ -307,7 +311,7 @@ GameState* gameextender(GameState *game){ // maybe fixed the bug
     memcpy(state->array[i], game->array[i], state->rowlen * sizeof(char));
     memcpy(state->counterarray[i], game->counterarray[i], state->rowlen * sizeof(int));
     }
-    state->pastpointer = game;
+    state->pastpointer = NULL;
     return state;
 }
 
