@@ -287,61 +287,28 @@ int check_word(char *word) {
 }
 
 GameState* gameextender(GameState *game){ // maybe fixed the bug
-    GameState *newgame = malloc(sizeof(GameState));
-if (newgame == NULL) {
-    perror("Memory allocation failed");
-    return NULL;
-}
+    GameState *state = malloc(sizeof(GameState));
+    if((state ==NULL) | (game == NULL))
+        return NULL;
+    state->rows = game->rows;
+    state->rowlen = game->rowlen;
 
-newgame->pastpointer = game;
-newgame->rows = game->rows;
-newgame->rowlen = game->rowlen;
+    state->array = malloc(state->rows * sizeof(char *));
+    state->counterarray = malloc(state->rows * sizeof(int *));
 
-// Allocate memory for array and counterarray pointers
-newgame->array = malloc(newgame->rows * sizeof(char *));
-newgame->counterarray = malloc(newgame->rows * sizeof(int *));
-if (newgame->array == NULL || newgame->counterarray == NULL) {
-    perror("Memory allocation failed");
-    /*
-    // Free allocated memory before returning NULL
-    free(newgame->array);
-    free(newgame->counterarray);
-    free(newgame);
-    return NULL;
-    */
-}
-
-// Allocate memory for each row in array and counterarray
-for (int i = 0; i < newgame->rows; i++) {
-    newgame->array[i] = malloc(newgame->rowlen * sizeof(char));
-    newgame->counterarray[i] = malloc(newgame->rowlen * sizeof(int));
-    if (newgame->array[i] == NULL || newgame->counterarray[i] == NULL) {
-        perror("Memory allocation failed");
-        // Free allocated memory before returning NULL
-        /*
-        for (int j = 0; j < i; j++) {
-            free(newgame->array[j]);
-            free(newgame->counterarray[j]);
-        }
-        free(newgame->array);
-        free(newgame->counterarray);
-        free(newgame);
-        */
+    if((state->array ==NULL) | (NULL == state->counterarray)){
+        printf("critcal memoryalloc eerror \n");
         return NULL;
     }
 
-    // Initialize the memory with zeros
-    memset(newgame->array[i], 0, newgame->rowlen * sizeof(char));
-    memset(newgame->counterarray[i], 0, newgame->rowlen * sizeof(int));
-}
-
-// Copy data from the existing game state to the new game state
-for (int i = 0; i < newgame->rows; i++) {
-    memcpy(newgame->array[i], game->array[i], newgame->rowlen * sizeof(char));
-    memcpy(newgame->counterarray[i], game->counterarray[i], newgame->rowlen * sizeof(int));
-}
-
-return newgame;
+    for(int i = 0; i < state->rows;i++){
+    state->array[i] = malloc(state->rowlen * sizeof(char));
+    state->counterarray[i] = malloc(state->rowlen * sizeof(int));
+    memcpy(state->array[i], game->array[i], state->rowlen * sizeof(char));
+    memcpy(state->counterarray[i], game->counterarray[i], state->rowlen * sizeof(int));
+    }
+    state->pastpointer = game;
+    return state;
 }
 
 GameState* undo_place_tiles(GameState *game) {//god help me
@@ -395,10 +362,8 @@ void free_game_state(GameState *game) {
 
 void save_game_state(GameState *game, const char *filename) { //done?
     FILE *file = fopen(filename, "w");
-    if (file == NULL) {
-        perror("Error opening file");
+    if (file == NULL) 
         return;
-    }
 
     for(int i = 0; i < game->rows;i++){         // actual characters
         for(int e= 0; e < game->rowlen; e++){
