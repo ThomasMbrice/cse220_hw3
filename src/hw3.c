@@ -99,7 +99,6 @@ GameState* initialize_game_state(const char *filename) {
     return state;
 }
 
-
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
     int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0, temprowforoverwrite = row, tempcolforoverwrite = col;
@@ -242,12 +241,19 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\nNOT A WORD: %s \n", word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
-    } else if (check_word(overwriteword) == 1 && strcmp(word, overwriteword) == 0){ //&& strcmp(word, overwriteword) == 0) { // word overwritten!!
+    } 
+    else if (check_word(overwriteword) == 1 && strcmp(word, overwriteword) == 0){ //&& strcmp(word, overwriteword) == 0) { // word overwritten!!
         printf("OVERWRITE: %s word %s\n", overwriteword, word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
     }
-
+    /*
+    else if(oppo_check(row, col, strlen(word), game, direction) == 1){
+        printf("OPPOCHECK TRiggered: %s\n", word);
+        *num_tiles_placed = 0;
+        game = game->pastpointer;
+    }
+    */
     for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -261,8 +267,13 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
     return game;
 }
+/*
+int oppo_check(int row, int col, int size, GameState *game, char direction){
 
 
+return 0; //NO ERROR 
+}
+*/
 int check_for_2_letter(GameState *game){
     int counter = 0;
     for(int i = 0; i < game->rows;i++){
@@ -308,37 +319,31 @@ int check_word(char *word) {
 }
 
 GameState* gameextender(GameState *game) {
-    // Create a new game state
     GameState *newgame = malloc(sizeof(GameState));
     if (newgame == NULL) {
         perror("Memory allocation failed");
         return NULL;
     }
 
-    // Initialize the new game state
     newgame->pastpointer = game;
     newgame->rows = game->rows;
     newgame->rowlen = game->rowlen;
 
-    // Allocate memory for array and counterarray pointers
     newgame->array = malloc(newgame->rows * sizeof(char *));
     newgame->counterarray = malloc(newgame->rows * sizeof(int *));
     if (newgame->array == NULL || newgame->counterarray == NULL) {
-        perror("Memory allocation failed");
-        // Free allocated memory before returning NULL
+        printf("mem allocation fail\n");
         free(newgame->array);
         free(newgame->counterarray);
         free(newgame);
         return NULL;
     }
 
-    // Copy the contents of the array and counterarray from the original game state
     for (int i = 0; i < newgame->rows; i++) {
         newgame->array[i] = malloc(newgame->rowlen * sizeof(char));
         newgame->counterarray[i] = malloc(newgame->rowlen * sizeof(int));
         if (newgame->array[i] == NULL || newgame->counterarray[i] == NULL) {
-            perror("Memory allocation failed");
-            // Free allocated memory before returning NULL
+        printf("mem allocation fail\n");
             for (int j = 0; j < i; j++) {
                 free(newgame->array[j]);
                 free(newgame->counterarray[j]);
@@ -348,7 +353,6 @@ GameState* gameextender(GameState *game) {
             free(newgame);
             return NULL;
         }
-        // Copy the contents of the array and counterarray from the original game state
         memcpy(newgame->array[i], game->array[i], newgame->rowlen * sizeof(char));
         memcpy(newgame->counterarray[i], game->counterarray[i], newgame->rowlen * sizeof(int));
     }
@@ -358,29 +362,34 @@ GameState* gameextender(GameState *game) {
 
 GameState* undo_place_tiles(GameState *game) {//god help me
     if (game->pastpointer != NULL) {
-        return game->pastpointer; 
+        for (int i = 0; i < game->rows; i++) {
+            free(game->array[i]);
+            free(game->counterarray[i]);
+        }
+        free(game->array);
+        free(game->counterarray);
+        GameState *state = game->pastpointer;
+        free(game);
+        return state;
     } else {
         return game; 
     }
 }
 
-void array_extender(GameState *game, int extend_num_of_rows_if_one, int inc_index){ //resizes and puts in peroids this needs work (need to add in num array feture)
-if (extend_num_of_rows_if_one == 1) { // Extend the number of 'rows'
-    game->rows += inc_index; // Increment the number of rows
+void array_extender(GameState *game, int extend_num_of_rows_if_one, int inc_index){ 
+if (extend_num_of_rows_if_one == 1) { // Extend rows
+    game->rows += inc_index; 
 
-    // Reallocate memory for the array of pointers
     char **temp_array = realloc(game->array, game->rows * sizeof(char *));
     int **temp_counter_array = realloc(game->counterarray, game->rows * sizeof(int *));
 
     if (temp_array == NULL || temp_counter_array == NULL) {
-        // Handle memory allocation failure
-        // Print an error message or take appropriate action
-        // It's important not to proceed further if memory allocation fails
+        printf("CRITICAL ERROR\n");
+        return;
     } else {
         game->array = temp_array;
         game->counterarray = temp_counter_array;
 
-        // Initialize the newly allocated rows
         for (int i = game->rows - inc_index; i < game->rows; i++) {
             game->array[i] = malloc(game->rowlen * sizeof(char));
             game->counterarray[i] = malloc(game->rowlen * sizeof(int));
@@ -390,24 +399,20 @@ if (extend_num_of_rows_if_one == 1) { // Extend the number of 'rows'
             }
         }
     }
-} else { // Extend the length of 'rowlength'
-    game->rowlen += inc_index; // Increment the row length
+} else { 
+    game->rowlen += inc_index; // rowlen
 
-    // Reallocate memory for each row individually
     for (int i = 0; i < game->rows; i++) {
         char *temp_row_array = realloc(game->array[i], game->rowlen * sizeof(char));
         int *temp_row_counter_array = realloc(game->counterarray[i], game->rowlen * sizeof(int));
 
         if (temp_row_array == NULL || temp_row_counter_array == NULL) {
-            // Handle memory allocation failure
-            // Print an error message or take appropriate action
-            // It's important not to proceed further if memory allocation fails
-            // You may need to free the previously allocated memory before exiting
+                    printf("CRITICAL ERROR\n");
+                    return;
         } else {
             game->array[i] = temp_row_array;
             game->counterarray[i] = temp_row_counter_array;
 
-            // Initialize the newly allocated columns
             for (int j = game->rowlen - inc_index; j < game->rowlen; j++) {
                 game->array[i][j] = '.';
                 game->counterarray[i][j] = 0;
@@ -418,10 +423,17 @@ if (extend_num_of_rows_if_one == 1) { // Extend the number of 'rows'
 }
 
 void free_game_state(GameState *game) {
-    
-    if (game != NULL)
-    free(game);
+    if (game != NULL) {
+        for (int i = 0; i < game->rows; i++) {
+            free(game->array[i]);
+            free(game->counterarray[i]);
+        }
+        free(game->array);
+        free(game->counterarray);
+        free(game);
+    }
 }
+
 
 void save_game_state(GameState *game, const char *filename) { //done?
     FILE *file = fopen(filename, "w");
