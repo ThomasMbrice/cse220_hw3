@@ -118,17 +118,15 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         return game;
     }
 
-    // Dynamically extend the board if necessary
     if (direction == 'V') { // Use rows variable
         game = gameextender(game);
         if ((size_t)game->rows < (row + strlen(tiles))) { 
             array_extender(game, 1, (row + strlen(tiles)) - game->rows);
         }
-        // Placing tiles vertically
         while (counter < strlen(tiles)) {
             if (!isspace(tiles[counter])) {
                 game->array[row][col] = tiles[counter];
-                if (game->counterarray[row][col] != 0) { // Check for overrunning 
+                if (game->counterarray[row][col] != 0) { //  overrunning 
                     ifnotzerotrue++;
                 }
                 game->counterarray[row][col] += 1;
@@ -146,18 +144,15 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             row++;
         }
 
-        // Go back and record overwritten word
         while (temprow - 1 >= 0 && game->counterarray[temprow - 1][tempcol] != 0) {
             temprow--;
             counter++;
         }
 
-        // Dynamically allocate memory for overwritten word
         overwriteword = malloc((counter + 1) * sizeof(char));
         if (overwriteword == NULL) 
             printf("failure in overwrite\n");
 
-        // Record the overwritten word
         if (game->pastpointer != NULL) {
             int index2 = 0, temprow2 = temprowforoverwrite;
             while ((temprow2 < game->pastpointer->rows) && (game->pastpointer->array[temprow2][tempcol] != '.')) {
@@ -167,7 +162,6 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             }
         }
 
-        // Record the word being placed
         index = 0;
         word = malloc((counter + 1) * sizeof(char));
         if (word == NULL) {
@@ -187,7 +181,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         if ((size_t)game->rowlen < (col + strlen(tiles))) {
             array_extender(game, 0, (col + strlen(tiles)) - game->rowlen);
         }
-        // Placing tiles horizontally
+
         while (counter < strlen(tiles)) {
             if (!isspace(tiles[counter])) {
                 game->array[row][col] = tiles[counter];
@@ -209,20 +203,17 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             col++;
         }
 
-        // Go back and record overwritten word
         while (tempcol - 1 >= 0 && game->counterarray[temprow][tempcol - 1] != 0) {
             tempcol--;
             counter++;
         }
 
-        // Dynamically allocate memory for overwritten word
         overwriteword = malloc((counter + 1) * sizeof(char));
         if (overwriteword == NULL) {
             perror("Memory allocation failed");
             exit(EXIT_FAILURE);
         }
 
-        // Record the overwritten word
         if (game->pastpointer != NULL) {
             int index2 = 0, tempcol2 = tempcolforoverwrite;
             while ((tempcol2 < game->pastpointer->rowlen) && (game->pastpointer->array[temprow][tempcol2] != '.')) {
@@ -232,11 +223,10 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             }
         }
 
-        // Record the word being placed
-        index = 0;
+        index = 0; // record word place
         word = malloc((counter + 1) * sizeof(char));
         if (word == NULL) {
-            perror("Memory allocation failed");
+            perror("nemory fail\n");
             exit(EXIT_FAILURE);
         }
         while ((tempcol < game->rowlen) && (game->array[temprow][tempcol] != '.')) {
@@ -248,18 +238,16 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         overwriteword[index] = '\0';
     }
 
-    // Check if the word exists and handle overwrite condition
-    if (check_word(word) == 0) { // Word does not exist
+    if (check_word(word) == 0) { // Word dne
         printf("\nNOT A WORD: %s \n", word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
-    } else if (check_word(overwriteword) == 1 && strcmp(word, overwriteword) == 0) { // Word exists and it's being overwritten
+    } else if (check_word(overwriteword) == 1 && strlen(overwriteword) > 2 && strlen(word) == strlen(overwriteword)){ //&& strcmp(word, overwriteword) == 0) { // word overwritten!!
         printf("OVERWRITE: %s word %s\n", overwriteword, word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
     }
 
-    // Print the updated game state
     for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -268,7 +256,6 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     }
     printf("\n");
 
-    // Free dynamically allocated memory
     free(word);
     free(overwriteword);
 
