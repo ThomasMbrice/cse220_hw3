@@ -101,11 +101,13 @@ GameState* initialize_game_state(const char *filename) {
 
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
-    int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0, temprowforoverwrite = row, tempcolforoverwrite = col;
+    int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0, 
+    temprowforoverwrite = row, tempcolforoverwrite = col, temprowforother= row, tempcolforother = col;
     *num_tiles_placed = 0;
     char *word = NULL, *overwriteword = NULL;
+    int ticker = check_for_2_letter(game);
 
-    if (check_for_2_letter(game) == 3 && strlen(tiles) < 2) { // Board is empty
+    if (ticker == 3 && strlen(tiles) < 2) { // Board is empty
         printf("\nWORD TOO SMALL FOR FIRST ROT: \n");
         *num_tiles_placed = 0;
         return game; // FIRST WORD IS TOO SMALL
@@ -133,7 +135,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
                 if (game->counterarray[row][col] > 5) { // Check for height greater than 5
                     printf("GREATER THAN 5 \n");
                     *num_tiles_placed = 0;
-                    game = game->pastpointer;
+                    game = undo_place_tiles(game);
                     return game;
                 }
 
@@ -192,7 +194,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
                 if (game->counterarray[row][col] > 5) { // Check for height greater than 5
                     printf("GREATER THAN 5 \n");
                     *num_tiles_placed = 0;
-                    game = game->pastpointer;
+                    game = undo_place_tiles(game);
                     return game;
                 }
 
@@ -247,14 +249,13 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         *num_tiles_placed = 0;
         game = game->pastpointer;
     }
-    /*
-    else if(oppo_check(row, col, strlen(word), game, direction) != 0){
+    else if(ticker != 3 && oppo_check(temprowforother, tempcolforother, strlen(tiles), game, direction) != 0){
         printf("OPPOCHECK TRiggered: %s\n", word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
     }
-    
-    for (int i = 0; i < game->rows; i++) {
+    /*
+        for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
         }
@@ -267,13 +268,13 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
     return game;
 }
-/*
+
 int oppo_check(int row, int col, int size, GameState *game, char direction) {
     int adjcount = 0, index;
     
     if (direction == 'H') {
         index = col;
-        while (index < col + size) {
+        while (index < game->rowlen) {
             if (row - 1 >= 0) { // Check upper
                 if (game->counterarray[row - 1][index] != 0)
                     adjcount++;
@@ -295,7 +296,7 @@ int oppo_check(int row, int col, int size, GameState *game, char direction) {
     }   
     else if (direction == 'V') {
         index = row;
-        while (index < row + size) {
+        while (index < game->rows) {
             if (col - 1 >= 0) { // Check left
                 if (game->counterarray[index][col - 1] != 0)
                     adjcount++;
@@ -321,7 +322,7 @@ int oppo_check(int row, int col, int size, GameState *game, char direction) {
     else
         return 0; // No error
 }
-*/
+
 
 int check_for_2_letter(GameState *game){
     int counter = 0;
