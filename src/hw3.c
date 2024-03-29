@@ -248,12 +248,12 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         game = game->pastpointer;
     }
     /*
-    else if(oppo_check(row, col, strlen(word), game, direction) == 1){
+    else if(oppo_check(row, col, strlen(word), game, direction) != 0){
         printf("OPPOCHECK TRiggered: %s\n", word);
         *num_tiles_placed = 0;
         game = game->pastpointer;
     }
-    */
+    
     for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -261,34 +261,68 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
     printf("\n");
-
+    */
     free(word);
     free(overwriteword);
 
     return game;
 }
 /*
-int oppo_check(int row, int col, int size, GameState *game, char direction){
-    int adjcount = 0, index = 0;
-    if(direction == 'H'){ // return 1 for failed wordcheck and 3 for non adjecncy
+int oppo_check(int row, int col, int size, GameState *game, char direction) {
+    int adjcount = 0, index;
+    
+    if (direction == 'H') {
         index = col;
-        while(index < col+size){
-
+        while (index < col + size) {
+            if (row - 1 >= 0) { // Check upper
+                if (game->counterarray[row - 1][index] != 0)
+                    adjcount++;
+            }
+            if (row + 1 < game->rows) { // Check lower
+                if (game->counterarray[row + 1][index] != 0)
+                    adjcount++;
+            }
+            index++; // Increment index
+        }
+        if (col - 1 >= 0) { // Check left
+            if (game->counterarray[row][col - 1] != 0)
+                adjcount++;
+        }
+        if (col + size < game->rowlen) { // Check right
+            if (game->counterarray[row][col + size] != 0)
+                adjcount++;
         }
     }   
-    if(direction == 'V'){
+    else if (direction == 'V') {
         index = row;
-        while(index < row+size){
-
+        while (index < row + size) {
+            if (col - 1 >= 0) { // Check left
+                if (game->counterarray[index][col - 1] != 0)
+                    adjcount++;
+            }
+            if (col + 1 < game->rowlen) { // Check right
+                if (game->counterarray[index][col + 1] != 0)
+                    adjcount++;
+            }
+            index++; // Increment index
+        }
+        if (row - 1 >= 0) { // Check upper
+            if (game->counterarray[row - 1][col] != 0)
+                adjcount++;
+        }
+        if (row + size < game->rows) { // Check lower
+            if (game->counterarray[row + size][col] != 0)
+                adjcount++;
         }
     }
     
-    if(adjcount == 0)
-    return 3;           //non adjecent
-
-return 0; //NO ERROR 
+    if (adjcount == 0)
+        return 3; // Non-adjacent
+    else
+        return 0; // No error
 }
 */
+
 int check_for_2_letter(GameState *game){
     int counter = 0;
     for(int i = 0; i < game->rows;i++){
@@ -307,7 +341,7 @@ int check_for_2_letter(GameState *game){
 
 int check_word(char *word) {
     FILE *file = fopen("./tests/words.txt", "r");
-    if (file == NULL) {
+    if  (file == NULL) {
         perror("Error: ");
         return 0;   //not found
     }
@@ -334,7 +368,7 @@ int check_word(char *word) {
 }
 
 GameState* gameextender(GameState *game) {
-    GameState *newgame = malloc(sizeof(GameState));
+   GameState *newgame = malloc(sizeof(GameState));
     if (newgame == NULL) {
         perror("Memory allocation failed");
         return NULL;
@@ -376,7 +410,7 @@ GameState* gameextender(GameState *game) {
 }
 
 GameState* undo_place_tiles(GameState *game) {//god help me
-    if (game->pastpointer != NULL) {
+    if (game->pastpointer != NULL|| game == NULL) {
         for (int i = 0; i < game->rows; i++) {
             free(game->array[i]);
             free(game->counterarray[i]);
@@ -445,6 +479,9 @@ void free_game_state(GameState *game) {
         }
         free(game->array);
         free(game->counterarray);
+
+        free_game_state(game->pastpointer);
+
         free(game);
     }
 }
