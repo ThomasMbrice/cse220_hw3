@@ -239,22 +239,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         overwriteword[index] = '\0';
     }
 
-    if (check_word(word) == 0) { // Word dne
-        printf("\nNOT A WORD: %s \n", word);
-        *num_tiles_placed = 0;
-        game = game->pastpointer;
-    } 
-    else if (check_word(overwriteword) == 1 && strcmp(word, overwriteword) == 0){ //&& strcmp(word, overwriteword) == 0) { // word overwritten!!
-        printf("OVERWRITE: %s word %s\n", overwriteword, word);
-        *num_tiles_placed = 0;
-        game = game->pastpointer;
-    }
-    else if(ticker != 3 && oppo_check(temprowforother, tempcolforother, strlen(tiles), game, direction) != 0){
-        printf("OPPOCHECK TRiggered: %s\n", word);
-        *num_tiles_placed = 0;
-        game = game->pastpointer;
-    }
-    /*
+/*
         for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -262,7 +247,24 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
     printf("\n");
-    */
+*/
+
+    if (check_word(word) == 0) { // Word dne
+        printf("\nNOT A WORD: %s \n", word);
+        *num_tiles_placed = 0;
+        game = undo_place_tiles(game);
+    } 
+    else if (check_word(overwriteword) == 1 && strcmp(word, overwriteword) == 0){ //&& strcmp(word, overwriteword) == 0) { // word overwritten!!
+        printf("OVERWRITE: %s word %s\n", overwriteword, word);
+        *num_tiles_placed = 0;
+        game = undo_place_tiles(game);
+    }
+    else if(ticker != 3 && oppo_check(temprowforother, tempcolforother, strlen(tiles), game, direction) != 0){
+        printf("OPPOCHECK TRiggered: %s\n", word);
+        *num_tiles_placed = 0;
+        game = undo_place_tiles(game);
+    }
+
     free(word);
     free(overwriteword);
 
@@ -270,59 +272,124 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 }
 
 int oppo_check(int row, int col, int size, GameState *game, char direction) {
-    int adjcount = 0, index;
-    
+    int adjcount = 0, index, check_word_indicator_zero_if_false = 1;
+
     if (direction == 'H') {
         index = col;
         while (index < game->rowlen) {
             if (row - 1 >= 0) { // Check upper
-                if (game->counterarray[row - 1][index] != 0)
+                if (game->counterarray[row - 1][index] != 0){
                     adjcount++;
+                    if(check_word_indicator_zero_if_false == 1 && check_word_OPPO(direction, row, index, game) == 0)
+                        check_word_indicator_zero_if_false = 0;
+                }
             }
             if (row + 1 < game->rows) { // Check lower
-                if (game->counterarray[row + 1][index] != 0)
+                if (game->counterarray[row + 1][index] != 0){
                     adjcount++;
+                    if(check_word_indicator_zero_if_false == 1 && check_word_OPPO(direction, row, index, game) == 0)
+                        check_word_indicator_zero_if_false = 0;
+                }
             }
             index++; // Increment index
         }
         if (col - 1 >= 0) { // Check left
-            if (game->counterarray[row][col - 1] != 0)
+            if (game->counterarray[row][col - 1] != 0){
                 adjcount++;
+            }
         }
         if (col + size < game->rowlen) { // Check right
-            if (game->counterarray[row][col + size] != 0)
+            if (game->counterarray[row][col + size] != 0){
                 adjcount++;
+            }
         }
     }   
     else if (direction == 'V') {
         index = row;
         while (index < game->rows) {
             if (col - 1 >= 0) { // Check left
-                if (game->counterarray[index][col - 1] != 0)
+                if (game->counterarray[index][col - 1] != 0){
                     adjcount++;
+                    if(check_word_indicator_zero_if_false == 1 && check_word_OPPO(direction, index, col, game) == 0)
+                        check_word_indicator_zero_if_false = 0;
+                }
             }
             if (col + 1 < game->rowlen) { // Check right
-                if (game->counterarray[index][col + 1] != 0)
+                if (game->counterarray[index][col + 1] != 0){
                     adjcount++;
+                    if(check_word_indicator_zero_if_false == 1 && check_word_OPPO(direction, index, col, game) == 0)
+                        check_word_indicator_zero_if_false = 0;
+                }
             }
             index++; // Increment index
         }
         if (row - 1 >= 0) { // Check upper
-            if (game->counterarray[row - 1][col] != 0)
+            if (game->counterarray[row - 1][col] != 0){
                 adjcount++;
+            }
         }
         if (row + size < game->rows) { // Check lower
-            if (game->counterarray[row + size][col] != 0)
+            if (game->counterarray[row + size][col] != 0){
                 adjcount++;
+            }
         }
     }
     
     if (adjcount == 0)
         return 3; // Non-adjacent
-    else
+    else if(check_word_indicator_zero_if_false == 0){
+        return 2; //adjecent word isnt valid
+    }
+    else{
         return 0; // No error
+    }
 }
 
+int check_word_OPPO(char direction, int row, int col, GameState *game){
+    char *word;
+    int counter = 1, temprow = row, tempcol = col, index = 0;
+    if(direction == 'V'){ // check opposite so hor
+
+    while (tempcol - 1 >= 0 && game->counterarray[row][tempcol - 1] != 0) {
+            tempcol--;
+            counter++;
+        }
+    while (col + 1 < game->rowlen && game->counterarray[row][col + 1] != 0) {
+            col++;
+            counter++;
+        }
+    word = malloc(counter * sizeof(char) +1);
+
+    for(int i = tempcol; i <= col; i++)
+        word[index++] = game->array[temprow][i];
+
+    word[index] = '\0';
+    }
+    else if(direction == 'H'){ // CHECK OPPOSITE!!! so vert
+
+        while (temprow - 1 >= 0 && game->counterarray[temprow-1][col] != 0) {
+            temprow--;
+            counter++;
+        }
+    while (row + 1 < game->rows && game->counterarray[row+1][col] != 0) {
+            row++;
+            counter++;
+        }
+    word = malloc(counter * sizeof(char) +1);
+
+    for(int i = temprow; i <= row; i++)
+        word[index++] = game->array[i][tempcol];
+
+    word[index] = '\0';
+    }
+    //printf("%s\n", word);
+    if(word != NULL && check_word(word) == 1){
+        return 1;                               // word is VALID
+    } 
+    else
+        return 0;                               // word is invalid
+
+}
 
 int check_for_2_letter(GameState *game){
     int counter = 0;
