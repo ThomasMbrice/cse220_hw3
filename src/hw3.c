@@ -100,21 +100,11 @@ GameState* initialize_game_state(const char *filename) {
 }
 
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
-(void)row;
-(void)col;
-(void)direction;
-(void)tiles;
-(void)num_tiles_placed;
-
-return game;
-}
-/*\\/
-GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
     int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0, 
     temprowforoverwrite = row, tempcolforoverwrite = col, temprowforother= row, tempcolforother = col;
     *num_tiles_placed = 0;
-    char *word = 0, *overwriteword = 0;
+    char word[255+strlen(tiles)], overwriteword[255+strlen(tiles)];
     int ticker = check_for_2_letter(game);
 
     if (ticker == 3 && strlen(tiles) < 2) { // Board is empty
@@ -160,13 +150,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             counter++;
         }
 
-        overwriteword = malloc((counter + 1) * sizeof(char));
-        if (overwriteword == NULL) {
-            printf("overwritefailed\n");
-            exit(EXIT_FAILURE);
-        }
         overwriteword[0] = '\0';
-
 
         if (game->pastpointer != NULL) {
             int index2 = 0, temprow2 = temprowforoverwrite;
@@ -178,11 +162,6 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         }
 
         index = 0;
-        word = malloc((counter + 1) * sizeof(char));
-        if (word == NULL) {
-            printf("word failed\n");
-            exit(EXIT_FAILURE);
-        }
         word[0] = '\0';
         while ((temprow < game->rows) && (game->array[temprow][tempcol] != '.')) {
             word[index] = game->array[temprow][tempcol];
@@ -224,11 +203,6 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
             counter++;
         }
 
-        overwriteword = malloc((counter + 1) * sizeof(char));
-        if (overwriteword == NULL) {
-            printf("overwriteword failed\n");
-            exit(EXIT_FAILURE);
-        }
         overwriteword[0] = '\0';
 
         if (game->pastpointer != NULL) {
@@ -241,11 +215,6 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         }
 
         index = 0; // record word place
-        word = malloc((counter + 1) * sizeof(char));
-        if (overwriteword == NULL) {
-            printf("word failed\n");
-            exit(EXIT_FAILURE);
-        }
         word[0] = '\0';
 
         while ((tempcol < game->rowlen) && (game->array[temprow][tempcol] != '.')) {
@@ -257,7 +226,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         overwriteword[index] = '\0';
     }
 
-
+/*
         for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -265,7 +234,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
     printf("\n");
-
+*/
     if (check_word(word) == 0) { // Word dne
         printf("\nNOT A WORD: %s \n", word);
         *num_tiles_placed = 0;
@@ -281,10 +250,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         *num_tiles_placed = 0;
         game = undo_place_tiles(game);
     }
-    if(game != NULL)
-    free(word);
-    free(overwriteword);
-
+    
     return game;
 }
 
@@ -363,7 +329,7 @@ int oppo_check(int row, int col, int size, GameState *game, char direction) {
 }
 
 int check_word_OPPO(char direction, int row, int col, GameState *game){
-    char *word = 0;
+    char word[game->rows*game->rowlen];
     int counter = 1, temprow = row, tempcol = col, index = 0;
     if(direction == 'V'){ // check opposite so hor
 
@@ -375,11 +341,6 @@ int check_word_OPPO(char direction, int row, int col, GameState *game){
             col++;
             counter++;
         }
-    word = malloc((counter+1) * sizeof(char));
-    if(word == NULL){
-        printf("oppocheck wordcreate failure\n");
-        return 0;
-    }
     word[0] = '\0';
 
     for(int i = tempcol; i <= col; i++)
@@ -397,11 +358,7 @@ int check_word_OPPO(char direction, int row, int col, GameState *game){
             row++;
             counter++;
         }
-    word = malloc((counter+1) * sizeof(char));
-    if(word == NULL){
-        printf("oppocheck wordcreate failure\n");
-        return 0;
-    }
+
     word[0] = '\0';
 
     for(int i = temprow; i <= row; i++)
@@ -410,7 +367,7 @@ int check_word_OPPO(char direction, int row, int col, GameState *game){
     word[index] = '\0';
     }
     //printf("%s\n", word);
-    if(word != NULL && check_word(word) == 1){
+    if(check_word(word) == 1){
         return 1;                               // word is VALID
     } 
     else
@@ -550,8 +507,6 @@ if (extend_num_of_rows_if_one == 1) { // Extend rows
     }
 }
 }
-*/
-
 
 GameState* undo_place_tiles(GameState *game) {//god help me
     if (game->pastpointer != NULL|| game == NULL) {
