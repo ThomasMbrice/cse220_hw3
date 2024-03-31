@@ -21,13 +21,13 @@ typedef struct GameState{
 GameState* initialize_game_state(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-        perror("Failed to open file");
+        perror("Failed\n");
         exit(EXIT_FAILURE);
     }
 
     GameState *state = malloc(sizeof(GameState));
     if (state == NULL) {
-        perror("Memory allocation failed");
+        perror("failed memory\n");
         exit(EXIT_FAILURE);
     }
 
@@ -50,7 +50,7 @@ GameState* initialize_game_state(const char *filename) {
     numofrows = index / rowlen;
 
     if (rowlen == 0 || numofrows == 0) {
-        perror("Critical failure: Invalid board dimensions");
+        perror("critical failure: unvalid board dimensions\n");
         exit(EXIT_FAILURE);
     }
 
@@ -62,7 +62,7 @@ GameState* initialize_game_state(const char *filename) {
     state->array = malloc(numofrows * sizeof(char *));
     state->counterarray = malloc(numofrows * sizeof(int *));
     if (state->array == NULL || state->counterarray == NULL) {
-        perror("Memory allocation failed");
+        perror("memory allocation failed\n");
         exit(EXIT_FAILURE);
     }
 
@@ -104,7 +104,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0, 
     temprowforoverwrite = row, tempcolforoverwrite = col, temprowforother= row, tempcolforother = col;
     *num_tiles_placed = 0;
-    char *word = NULL, *overwriteword = NULL;
+    char *word = 0, *overwriteword = 0;
     int ticker = check_for_2_letter(game);
 
     if (ticker == 3 && strlen(tiles) < 2) { // Board is empty
@@ -114,7 +114,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
     }
 
     if ((row < 0) || (col < 0) || (tiles == NULL) || (game->rowlen <= col) || (game->rows <= row)) {
-        printf("Invalid initialization condition\n");
+        printf("Invalid initialization\n");
         *num_tiles_placed = 0;
         return game;
     }
@@ -151,8 +151,12 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         }
 
         overwriteword = malloc((counter + 1) * sizeof(char));
-        if (overwriteword == NULL) 
-            printf("failure in overwrite\n");
+        if (overwriteword == NULL) {
+            printf("overwritefailed\n");
+            exit(EXIT_FAILURE);
+        }
+        overwriteword[0] = '\0';
+
 
         if (game->pastpointer != NULL) {
             int index2 = 0, temprow2 = temprowforoverwrite;
@@ -166,9 +170,10 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         index = 0;
         word = malloc((counter + 1) * sizeof(char));
         if (word == NULL) {
-            perror("Memory allocation failed");
+            printf("word failed\n");
             exit(EXIT_FAILURE);
         }
+        word[0] = '\0';
         while ((temprow < game->rows) && (game->array[temprow][tempcol] != '.')) {
             word[index] = game->array[temprow][tempcol];
             index++;
@@ -211,9 +216,10 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
         overwriteword = malloc((counter + 1) * sizeof(char));
         if (overwriteword == NULL) {
-            perror("Memory allocation failed");
+            printf("overwriteword failed\n");
             exit(EXIT_FAILURE);
         }
+        overwriteword[0] = '\0';
 
         if (game->pastpointer != NULL) {
             int index2 = 0, tempcol2 = tempcolforoverwrite;
@@ -226,10 +232,12 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
 
         index = 0; // record word place
         word = malloc((counter + 1) * sizeof(char));
-        if (word == NULL) {
-            perror("nemory fail\n");
+        if (overwriteword == NULL) {
+            printf("word failed\n");
             exit(EXIT_FAILURE);
         }
+        word[0] = '\0';
+
         while ((tempcol < game->rowlen) && (game->array[temprow][tempcol] != '.')) {
             word[index] = game->array[temprow][tempcol];
             tempcol++;
@@ -264,7 +272,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         *num_tiles_placed = 0;
         game = undo_place_tiles(game);
     }
-
+    if(game != NULL)
     free(word);
     free(overwriteword);
 
@@ -346,7 +354,7 @@ int oppo_check(int row, int col, int size, GameState *game, char direction) {
 }
 
 int check_word_OPPO(char direction, int row, int col, GameState *game){
-    char *word;
+    char *word = 0;
     int counter = 1, temprow = row, tempcol = col, index = 0;
     if(direction == 'V'){ // check opposite so hor
 
@@ -358,7 +366,12 @@ int check_word_OPPO(char direction, int row, int col, GameState *game){
             col++;
             counter++;
         }
-    word = malloc(counter * sizeof(char) +1);
+    word = malloc((counter+1) * sizeof(char));
+    if(word == NULL){
+        printf("oppocheck wordcreate failure\n");
+        return 0;
+    }
+    word[0] = '\0';
 
     for(int i = tempcol; i <= col; i++)
         word[index++] = game->array[temprow][i];
@@ -375,7 +388,12 @@ int check_word_OPPO(char direction, int row, int col, GameState *game){
             row++;
             counter++;
         }
-    word = malloc(counter * sizeof(char) +1);
+    word = malloc((counter+1) * sizeof(char));
+    if(word == NULL){
+        printf("oppocheck wordcreate failure\n");
+        return 0;
+    }
+    word[0] = '\0';
 
     for(int i = temprow; i <= row; i++)
         word[index++] = game->array[i][tempcol];
@@ -409,8 +427,8 @@ int check_for_2_letter(GameState *game){
 
 int check_word(char *word) {
     FILE *file = fopen("./tests/words.txt", "r");
-    if  (file == NULL) {
-        perror("Error: ");
+    if  (file == NULL || word == NULL) {
+        printf("word check error \n");
         return 0;   //not found
     }
     char line[1024];
@@ -427,10 +445,11 @@ int check_word(char *word) {
         upperLine[strlen(line)] = '\0';
 
         if (strcmp(word, upperLine) == 0) {
+            fclose(file);
             return 1; // found
         }
     }
-
+    fclose(file);
     return 0; // not found
 
 }
@@ -442,8 +461,8 @@ GameState* gameextender(GameState *game) {
         return NULL;
     }
 
-    newgame->pastpointer = game;
     newgame->rows = game->rows;
+    newgame->pastpointer = game;
     newgame->rowlen = game->rowlen;
 
     newgame->array = malloc(newgame->rows * sizeof(char *));
@@ -453,7 +472,7 @@ GameState* gameextender(GameState *game) {
         free(newgame->array);
         free(newgame->counterarray);
         free(newgame);
-        return NULL;
+        return game;
     }
 
     for (int i = 0; i < newgame->rows; i++) {
@@ -468,7 +487,7 @@ GameState* gameextender(GameState *game) {
             free(newgame->array);
             free(newgame->counterarray);
             free(newgame);
-            return NULL;
+            return game;
         }
         memcpy(newgame->array[i], game->array[i], newgame->rowlen * sizeof(char));
         memcpy(newgame->counterarray[i], game->counterarray[i], newgame->rowlen * sizeof(int));
