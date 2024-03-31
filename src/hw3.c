@@ -100,6 +100,16 @@ GameState* initialize_game_state(const char *filename) {
 }
 
 GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
+(void)row;
+(void)col;
+(void)direction;
+(void)tiles;
+(void)num_tiles_placed;
+
+return game;
+}
+/*\\/
+GameState* place_tiles(GameState *game, int row, int col, char direction, const char *tiles, int *num_tiles_placed) {
     long unsigned int counter = 0;
     int temprow = row, tempcol = col, index = 0, ifnotzerotrue = 0, 
     temprowforoverwrite = row, tempcolforoverwrite = col, temprowforother= row, tempcolforother = col;
@@ -247,7 +257,7 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         overwriteword[index] = '\0';
     }
 
-/*
+
         for (int i = 0; i < game->rows; i++) {
         for (int j = 0; j < game->rowlen; j++) {
             printf(" %c", game->array[i][j]);
@@ -255,7 +265,6 @@ GameState* place_tiles(GameState *game, int row, int col, char direction, const 
         printf("\n");
     }
     printf("\n");
-*/
 
     if (check_word(word) == 0) { // Word dne
         printf("\nNOT A WORD: %s \n", word);
@@ -496,22 +505,6 @@ GameState* gameextender(GameState *game) {
     return newgame;
 }
 
-GameState* undo_place_tiles(GameState *game) {//god help me
-    if (game->pastpointer != NULL|| game == NULL) {
-        for (int i = 0; i < game->rows; i++) {
-            free(game->array[i]);
-            free(game->counterarray[i]);
-        }
-        free(game->array);
-        free(game->counterarray);
-        GameState *state = game->pastpointer;
-        free(game);
-        return state;
-    } else {
-        return game; 
-    }
-}
-
 void array_extender(GameState *game, int extend_num_of_rows_if_one, int inc_index){ 
 if (extend_num_of_rows_if_one == 1) { // Extend rows
     game->rows += inc_index; 
@@ -556,6 +549,24 @@ if (extend_num_of_rows_if_one == 1) { // Extend rows
         }
     }
 }
+}
+*/
+
+
+GameState* undo_place_tiles(GameState *game) {//god help me
+    if (game->pastpointer != NULL|| game == NULL) {
+        for (int i = 0; i < game->rows; i++) {
+            free(game->array[i]);
+            free(game->counterarray[i]);
+        }
+        free(game->array);
+        free(game->counterarray);
+        GameState *state = game->pastpointer;
+        free(game);
+        return state;
+    } else {
+        return game; 
+    }
 }
 
 void free_game_state(GameState *game) {
